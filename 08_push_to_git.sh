@@ -1,31 +1,29 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# Step 8: Upload / Push 'spanner-observability' Repository to Git Remote
+# Step 8: Upload / Push 'spanner-observability' Repository to GitHub
+#   Default Remote: https://github.com/priteshjani/spanner-observability.git
+#
 #   Usage:
-#     ./08_push_to_git.sh <GIT_REMOTE_URL>
-#   Example (GitHub):
-#     ./08_push_to_git.sh https://github.com/priteshjani/spanner-observability.git
-#   Example (Cloud Source Repositories - default if no URL provided):
+#     # Option A: Interactive push (prompts for GitHub username/PAT)
 #     ./08_push_to_git.sh
+#
+#     # Option B: Non-interactive push using GITHUB_TOKEN environment variable
+#     GITHUB_TOKEN="ghp_xxx" ./08_push_to_git.sh
 # ==============================================================================
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "${SCRIPT_DIR}/config.env"
-
-REMOTE_URL="${1:-}"
-
 cd "${SCRIPT_DIR}"
 
-if [[ -z "${REMOTE_URL}" ]]; then
-  echo "[INFO] No GitHub URL passed as argument."
-  echo "       Checking/creating Google Cloud Source Repository 'spanner-observability' in '${PROJECT_ID}'..."
-  gcloud services enable sourcerepo.googleapis.com --project="${PROJECT_ID}" || true
-  if ! gcloud source repos describe spanner-observability --project="${PROJECT_ID}" >/dev/null 2>&1; then
-    gcloud source repos create spanner-observability --project="${PROJECT_ID}"
-  fi
-  REMOTE_URL="https://source.developers.google.com/p/${PROJECT_ID}/r/spanner-observability"
-  git config credential.https://source.developers.google.com.helper gcloud.sh
+GITHUB_USER="${GITHUB_USER:-priteshjani}"
+REPO_NAME="spanner-observability"
+DEFAULT_REMOTE="https://github.com/${GITHUB_USER}/${REPO_NAME}.git"
+REMOTE_URL="${1:-${DEFAULT_REMOTE}}"
+
+if [[ -n "${GITHUB_TOKEN:-}" ]]; then
+  AUTH_REMOTE="https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/${GITHUB_USER}/${REPO_NAME}.git"
+else
+  AUTH_REMOTE="${REMOTE_URL}"
 fi
 
 echo "Configuring Git remote 'origin' -> ${REMOTE_URL}"
@@ -36,9 +34,9 @@ else
 fi
 
 git add -A
-git diff-index --quiet HEAD || git commit -m "Update spanner-observability scripts and alert policies"
+git diff-index --quiet HEAD || git commit -m "Update spanner-observability scripts and documentation"
 
 echo "Pushing 'main' branch to ${REMOTE_URL}..."
-git push -u origin main
+git push -u "${AUTH_REMOTE}" main
 
-echo "[SUCCESS] Repository 'spanner-observability' pushed to ${REMOTE_URL}"
+echo "[SUCCESS] All files pushed to https://github.com/${GITHUB_USER}/${REPO_NAME}"
