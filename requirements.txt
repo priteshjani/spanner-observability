@@ -1,0 +1,2 @@
+google-cloud-spanner>=3.47.0
+google-api-core>=2.19.0
