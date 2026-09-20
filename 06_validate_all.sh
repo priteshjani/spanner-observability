@@ -26,14 +26,21 @@ gcloud spanner databases execute-sql "${DATABASE_ID}" \
 
 echo ""
 echo "[3/5] Checking Notification Channels (${NOTIFICATION_EMAILS})..."
-gcloud beta monitoring channels list \
-  --project="${PROJECT_ID}" \
-  --filter="type='email'" \
-  --format="table(name,displayName,labels.email_address,enabled)"
+ACCESS_TOKEN="$(gcloud auth print-access-token)"
+curl -s -H "Authorization: Bearer ${ACCESS_TOKEN}" \
+  "https://monitoring.googleapis.com/v3/projects/${PROJECT_ID}/notificationChannels" \
+  | python3 -c "
+import sys, json
+data = json.load(sys.stdin)
+print(f'{\"NAME\":<65} {\"DISPLAY_NAME\":<28} {\"EMAIL\"}')
+for ch in data.get('notificationChannels', []):
+    if ch.get('type') == 'email':
+        print(f\"{ch.get('name',''):<65} {ch.get('displayName',''):<28} {ch.get('labels',{}).get('email_address','')}\")
+"
 
 echo ""
 echo "[4/5] Checking Active Cloud Monitoring Alert Policies..."
-gcloud alpha monitoring policies list \
+gcloud monitoring policies list \
   --project="${PROJECT_ID}" \
   --filter="displayName ~ 'Spanner Observability'" \
   --format="table(name,displayName,enabled)"

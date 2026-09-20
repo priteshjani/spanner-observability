@@ -14,8 +14,8 @@ if [[ ! "${response}" =~ ^([yY][eE][sS]|[yY])$ ]]; then
 fi
 
 echo "Deleting Spanner Observability Alert Policies..."
-for policy in $(gcloud alpha monitoring policies list --project="${PROJECT_ID}" --filter="displayName ~ 'Spanner Observability'" --format="value(name)"); do
-  gcloud alpha monitoring policies delete "${policy}" --project="${PROJECT_ID}" --quiet || true
+for policy in $(gcloud monitoring policies list --project="${PROJECT_ID}" --filter="displayName ~ 'Spanner Observability'" --format="value(name)"); do
+  gcloud monitoring policies delete "${policy}" --project="${PROJECT_ID}" --quiet || true
 done
 
 echo "Deleting Log-Based Metric 'spanner_leader_change_events'..."

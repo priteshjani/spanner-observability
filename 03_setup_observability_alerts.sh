@@ -15,24 +15,40 @@ echo "1. Creating Email Notification Channels in Project '${PROJECT_ID}'"
 echo "   Emails: ${NOTIFICATION_EMAIL_1}, ${NOTIFICATION_EMAIL_2}"
 echo "=================================================================="
 
+ACCESS_TOKEN="$(gcloud auth print-access-token)"
+
 create_or_get_email_channel() {
   local email="$1"
   local display_name="$2"
   local existing
-  existing=$(gcloud beta monitoring channels list \
-    --project="${PROJECT_ID}" \
-    --filter="type='email' AND labels.email_address='${email}'" \
-    --format="value(name)" | head -n 1 || true)
+
+  existing=$(curl -s -H "Authorization: Bearer ${ACCESS_TOKEN}" \
+    "https://monitoring.googleapis.com/v3/projects/${PROJECT_ID}/notificationChannels" \
+    | python3 -c "
+import sys, json
+data = json.load(sys.stdin)
+for ch in data.get('notificationChannels', []):
+    if ch.get('type') == 'email' and ch.get('labels', {}).get('email_address') == '${email}':
+        print(ch['name'])
+        break
+" || true)
 
   if [[ -n "${existing}" ]]; then
     echo "${existing}"
   else
-    gcloud beta monitoring channels create \
-      --project="${PROJECT_ID}" \
-      --display-name="${display_name}" \
-      --type="email" \
-      --channel-labels="email_address=${email}" \
-      --format="value(name)"
+    curl -s -X POST \
+      -H "Authorization: Bearer ${ACCESS_TOKEN}" \
+      -H "Content-Type: application/json" \
+      -d "{
+        \"type\": \"email\",
+        \"displayName\": \"${display_name}\",
+        \"labels\": {
+          \"email_address\": \"${email}\"
+        },
+        \"enabled\": true
+      }" \
+      "https://monitoring.googleapis.com/v3/projects/${PROJECT_ID}/notificationChannels" \
+      | python3 -c "import sys, json; print(json.load(sys.stdin)['name'])"
   fi
 }
 
@@ -104,18 +120,18 @@ cat > "${SCRIPT_DIR}/alerts/alert_error_rate.json" <<EOF
 }
 EOF
 
-EXISTING_ERR_POLICY=$(gcloud alpha monitoring policies list \
+EXISTING_ERR_POLICY=$(gcloud monitoring policies list \
   --project="${PROJECT_ID}" \
   --filter="displayName='[Spanner Observability] High API Error Rate - ${INSTANCE_ID}'" \
   --format="value(name)" | head -n 1 || true)
 
 if [[ -n "${EXISTING_ERR_POLICY}" ]]; then
-  gcloud alpha monitoring policies update "${EXISTING_ERR_POLICY}" \
+  gcloud monitoring policies update "${EXISTING_ERR_POLICY}" \
     --project="${PROJECT_ID}" \
     --policy-from-file="${SCRIPT_DIR}/alerts/alert_error_rate.json"
   echo "[OK] Updated existing Error Rate Alert Policy: ${EXISTING_ERR_POLICY}"
 else
-  gcloud alpha monitoring policies create \
+  gcloud monitoring policies create \
     --project="${PROJECT_ID}" \
     --policy-from-file="${SCRIPT_DIR}/alerts/alert_error_rate.json"
   echo "[SUCCESS] Created Error Rate Alert Policy."
@@ -170,18 +186,18 @@ cat > "${SCRIPT_DIR}/alerts/alert_leader_percentage_shift.json" <<EOF
 }
 EOF
 
-EXISTING_LEADER_METRIC_POLICY=$(gcloud alpha monitoring policies list \
+EXISTING_LEADER_METRIC_POLICY=$(gcloud monitoring policies list \
   --project="${PROJECT_ID}" \
   --filter="displayName='[Spanner Observability] Multi-Region Leader Flip (Metric Shift) - ${INSTANCE_ID}'" \
   --format="value(name)" | head -n 1 || true)
 
 if [[ -n "${EXISTING_LEADER_METRIC_POLICY}" ]]; then
-  gcloud alpha monitoring policies update "${EXISTING_LEADER_METRIC_POLICY}" \
+  gcloud monitoring policies update "${EXISTING_LEADER_METRIC_POLICY}" \
     --project="${PROJECT_ID}" \
     --policy-from-file="${SCRIPT_DIR}/alerts/alert_leader_percentage_shift.json"
   echo "[OK] Updated existing Multi-Region Leader Percentage Shift Alert Policy: ${EXISTING_LEADER_METRIC_POLICY}"
 else
-  gcloud alpha monitoring policies create \
+  gcloud monitoring policies create \
     --project="${PROJECT_ID}" \
     --policy-from-file="${SCRIPT_DIR}/alerts/alert_leader_percentage_shift.json"
   echo "[SUCCESS] Created Multi-Region Leader Percentage Shift Alert Policy."
@@ -232,18 +248,18 @@ cat > "${SCRIPT_DIR}/alerts/alert_leader_config_flip.json" <<EOF
 }
 EOF
 
-EXISTING_LEADER_LOG_POLICY=$(gcloud alpha monitoring policies list \
+EXISTING_LEADER_LOG_POLICY=$(gcloud monitoring policies list \
   --project="${PROJECT_ID}" \
   --filter="displayName='[Spanner Observability] Multi-Region Leader Flip (Audit & Telemetry) - ${INSTANCE_ID}'" \
   --format="value(name)" | head -n 1 || true)
 
 if [[ -n "${EXISTING_LEADER_LOG_POLICY}" ]]; then
-  gcloud alpha monitoring policies update "${EXISTING_LEADER_LOG_POLICY}" \
+  gcloud monitoring policies update "${EXISTING_LEADER_LOG_POLICY}" \
     --project="${PROJECT_ID}" \
     --policy-from-file="${SCRIPT_DIR}/alerts/alert_leader_config_flip.json"
   echo "[OK] Updated existing Multi-Region Leader Config Flip Alert Policy: ${EXISTING_LEADER_LOG_POLICY}"
 else
-  gcloud alpha monitoring policies create \
+  gcloud monitoring policies create \
     --project="${PROJECT_ID}" \
     --policy-from-file="${SCRIPT_DIR}/alerts/alert_leader_config_flip.json"
   echo "[SUCCESS] Created Multi-Region Leader Config Flip Alert Policy."
