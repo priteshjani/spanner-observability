@@ -149,31 +149,26 @@ cat > "${SCRIPT_DIR}/alerts/alert_leader_percentage_shift.json" <<EOF
     "content": "### Multi-Region Spanner Leader Shift Detected\n\nThe primary leader region **${PRIMARY_LEADER_REGION}** for multi-region Spanner instance **${INSTANCE_ID}** (**${INSTANCE_CONFIG}**) experienced a drop in leader_percentage_by_region below 50%, indicating that read-write leader tablets have flipped/failed over to another region (e.g. **${ALTERNATE_LEADER_REGION}**).\n\n- **Project**: ${PROJECT_ID}\n- **Instance**: ${INSTANCE_ID}\n- **Expected Primary Leader**: ${PRIMARY_LEADER_REGION}",
     "mimeType": "text/markdown"
   },
-  "combiner": "OR",
-  "enabled": true,
-  "notificationChannels": [
-    "${CHANNEL_1}",
-    "${CHANNEL_2}"
-  ],
+  "userLabels": {},
   "conditions": [
     {
       "displayName": "Primary Leader Region (${PRIMARY_LEADER_REGION}) Leader Percentage < 50%",
       "conditionThreshold": {
-        "filter": "resource.type = \"spanner_instance\" AND resource.labels.instance_id = \"${INSTANCE_ID}\" AND metric.type = \"spanner.googleapis.com/instance/leader_percentage_by_region\" AND metric.labels.region = \"${PRIMARY_LEADER_REGION}\"",
         "aggregations": [
           {
             "alignmentPeriod": "60s",
-            "perSeriesAligner": "ALIGN_MEAN",
             "crossSeriesReducer": "REDUCE_MEAN",
             "groupByFields": [
               "resource.label.instance_id",
               "metric.label.region"
-            ]
+            ],
+            "perSeriesAligner": "ALIGN_MEAN"
           }
         ],
         "comparison": "COMPARISON_LT",
-        "thresholdValue": 50.0,
         "duration": "60s",
+        "filter": "resource.type = \"spanner_instance\" AND resource.labels.instance_id = \"${INSTANCE_ID}\" AND metric.type = \"spanner.googleapis.com/instance/leader_percentage_by_region\" AND metric.labels.region = \"${PRIMARY_LEADER_REGION}\"",
+        "thresholdValue": 0.9,
         "trigger": {
           "count": 1
         }
@@ -182,7 +177,13 @@ cat > "${SCRIPT_DIR}/alerts/alert_leader_percentage_shift.json" <<EOF
   ],
   "alertStrategy": {
     "autoClose": "1800s"
-  }
+  },
+  "combiner": "OR",
+  "enabled": true,
+  "notificationChannels": [
+    "${CHANNEL_1}",
+    "${CHANNEL_2}"
+  ]
 }
 EOF
 

@@ -4,31 +4,26 @@
     "content": "### Multi-Region Spanner Leader Shift Detected\n\nThe primary leader region **us-east4** for multi-region Spanner instance **spanner-obs-mr** (**nam3**) experienced a drop in leader_percentage_by_region below 50%, indicating that read-write leader tablets have flipped/failed over to another region (e.g. **us-east1**).\n\n- **Project**: my-host-prj-472917\n- **Instance**: spanner-obs-mr\n- **Expected Primary Leader**: us-east4",
     "mimeType": "text/markdown"
   },
-  "combiner": "OR",
-  "enabled": true,
-  "notificationChannels": [
-    "projects/my-host-prj-472917/notificationChannels/8062559329788753074",
-    "projects/my-host-prj-472917/notificationChannels/18302585169387992288"
-  ],
+  "userLabels": {},
   "conditions": [
     {
       "displayName": "Primary Leader Region (us-east4) Leader Percentage < 50%",
       "conditionThreshold": {
-        "filter": "resource.type = \"spanner_instance\" AND resource.labels.instance_id = \"spanner-obs-mr\" AND metric.type = \"spanner.googleapis.com/instance/leader_percentage_by_region\" AND metric.labels.region = \"us-east4\"",
         "aggregations": [
           {
             "alignmentPeriod": "60s",
-            "perSeriesAligner": "ALIGN_MEAN",
             "crossSeriesReducer": "REDUCE_MEAN",
             "groupByFields": [
               "resource.label.instance_id",
               "metric.label.region"
-            ]
+            ],
+            "perSeriesAligner": "ALIGN_MEAN"
           }
         ],
         "comparison": "COMPARISON_LT",
-        "thresholdValue": 50.0,
         "duration": "60s",
+        "filter": "resource.type = \"spanner_instance\" AND resource.labels.instance_id = \"spanner-obs-mr\" AND metric.type = \"spanner.googleapis.com/instance/leader_percentage_by_region\" AND metric.labels.region = \"us-east4\"",
+        "thresholdValue": 0.9,
         "trigger": {
           "count": 1
         }
@@ -37,5 +32,11 @@
   ],
   "alertStrategy": {
     "autoClose": "1800s"
-  }
+  },
+  "combiner": "OR",
+  "enabled": true,
+  "notificationChannels": [
+    "projects/my-host-prj-472917/notificationChannels/8062559329788753074",
+    "projects/my-host-prj-472917/notificationChannels/18302585169387992288"
+  ]
 }
