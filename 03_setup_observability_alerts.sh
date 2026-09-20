@@ -46,7 +46,6 @@ echo ""
 echo "=================================================================="
 echo "2. Creating Log-Based Metric for Spanner Multi-Region Leader Flip"
 echo "=================================================================="
-# Tracks UpdateDatabaseDdl statements altering default_leader or instance config changes
 if gcloud logging metrics describe spanner_leader_change_events --project="${PROJECT_ID}" >/dev/null 2>&1; then
   echo "[OK] Log-based metric 'spanner_leader_change_events' already exists."
 else
@@ -65,7 +64,7 @@ cat > "${SCRIPT_DIR}/alerts/alert_error_rate.json" <<EOF
 {
   "displayName": "[Spanner Observability] High API Error Rate - ${INSTANCE_ID}",
   "documentation": {
-    "content": "### Spanner Instance Error Rate Alert\n\nSpanner instance **${INSTANCE_ID}** in project **${PROJECT_ID}** (VPC: **${VPC_NETWORK}**) is returning non-OK API responses (`status != OK`).\n\n- **Instance**: `${INSTANCE_ID}`\n- **Database**: `${DATABASE_ID}`\n- **Action**: Check Cloud Monitoring dashboard and application error logs for `DEADLINE_EXCEEDED`, `ABORTED`, `INVALID_ARGUMENT`, or `UNAVAILABLE` errors.",
+    "content": "### Spanner Instance Error Rate Alert\n\nSpanner instance **${INSTANCE_ID}** in project **${PROJECT_ID}** (VPC: **${VPC_NETWORK}**) is returning non-OK API responses (status != OK).\n\n- **Instance**: ${INSTANCE_ID}\n- **Database**: ${DATABASE_ID}\n- **Action**: Check Cloud Monitoring dashboard and application error logs for DEADLINE_EXCEEDED, ABORTED, INVALID_ARGUMENT, or UNAVAILABLE errors.",
     "mimeType": "text/markdown"
   },
   "combiner": "OR",
@@ -131,7 +130,7 @@ cat > "${SCRIPT_DIR}/alerts/alert_leader_percentage_shift.json" <<EOF
 {
   "displayName": "[Spanner Observability] Multi-Region Leader Flip (Metric Shift) - ${INSTANCE_ID}",
   "documentation": {
-    "content": "### Multi-Region Spanner Leader Shift Detected\n\nThe primary leader region **${PRIMARY_LEADER_REGION}** for multi-region Spanner instance **${INSTANCE_ID}** (`${INSTANCE_CONFIG}`) experienced a drop in `leader_percentage` below 50%, indicating that read-write leader tablets have flipped/failed over to another region (e.g. **${ALTERNATE_LEADER_REGION}**).\n\n- **Project**: `${PROJECT_ID}`\n- **Instance**: `${INSTANCE_ID}`\n- **Expected Primary Leader**: `${PRIMARY_LEADER_REGION}`",
+    "content": "### Multi-Region Spanner Leader Shift Detected\n\nThe primary leader region **${PRIMARY_LEADER_REGION}** for multi-region Spanner instance **${INSTANCE_ID}** (**${INSTANCE_CONFIG}**) experienced a drop in leader_percentage below 50%, indicating that read-write leader tablets have flipped/failed over to another region (e.g. **${ALTERNATE_LEADER_REGION}**).\n\n- **Project**: ${PROJECT_ID}\n- **Instance**: ${INSTANCE_ID}\n- **Expected Primary Leader**: ${PRIMARY_LEADER_REGION}",
     "mimeType": "text/markdown"
   },
   "combiner": "OR",
@@ -197,7 +196,7 @@ cat > "${SCRIPT_DIR}/alerts/alert_leader_config_flip.json" <<EOF
 {
   "displayName": "[Spanner Observability] Multi-Region Leader Flip (Audit & Telemetry) - ${INSTANCE_ID}",
   "documentation": {
-    "content": "### Multi-Region Spanner Leader Flip / Change Alert\n\nA multi-region leader flip (`default_leader` modification or leader election change) was detected on Spanner instance **${INSTANCE_ID}** / database **${DATABASE_ID}** in project **${PROJECT_ID}**.\n\n- **VPC**: `${VPC_NETWORK}`\n- **Primary Region**: `${PRIMARY_LEADER_REGION}`\n- **Alternate Region**: `${ALTERNATE_LEADER_REGION}`",
+    "content": "### Multi-Region Spanner Leader Flip / Change Alert\n\nA multi-region leader flip (default_leader modification or leader election change) was detected on Spanner instance **${INSTANCE_ID}** / database **${DATABASE_ID}** in project **${PROJECT_ID}**.\n\n- **VPC**: ${VPC_NETWORK}\n- **Primary Region**: ${PRIMARY_LEADER_REGION}\n- **Alternate Region**: ${ALTERNATE_LEADER_REGION}",
     "mimeType": "text/markdown"
   },
   "combiner": "OR",

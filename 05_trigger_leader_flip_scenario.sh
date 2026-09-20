@@ -22,7 +22,7 @@ CURRENT_LEADER=$(gcloud spanner databases execute-sql "${DATABASE_ID}" \
   --instance="${INSTANCE_ID}" \
   --project="${PROJECT_ID}" \
   --sql="SELECT OPTION_VALUE FROM INFORMATION_SCHEMA.DATABASE_OPTIONS WHERE OPTION_NAME = 'default_leader'" \
-  --format="value(rows[0][0])" | tr -d '[:space:]')
+  --format=json | python3 -c "import sys, json; data=json.load(sys.stdin); print(data['rows'][0][0] if data.get('rows') else '${PRIMARY_LEADER_REGION}')")
 
 echo "Current Default Leader Region : ${CURRENT_LEADER}"
 

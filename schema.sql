@@ -1,10 +1,8 @@
--- ============================================================================
--- Multi-Region Spanner Schema for Availability & Observability Demo
--- ============================================================================
-
--- Set initial default leader region to us-east4 (part of nam3 multi-region)
 ALTER DATABASE `finops-obs-db` SET OPTIONS (
-  default_leader = 'us-east4',
+  default_leader = 'us-east4'
+);
+
+ALTER DATABASE `finops-obs-db` SET OPTIONS (
   version_retention_period = '1h'
 );
 
