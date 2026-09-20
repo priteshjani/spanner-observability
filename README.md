@@ -92,9 +92,7 @@ flowchart LR
 ### Step 4: Start the Continuous Read/Write Application (Terminal 1)
 Keep this running throughout the demo to generate continuous read/write load and watch live leader status:
 ```bash
-python3 -m venv .venv
-.venv/bin/pip install -r requirements.txt
-.venv/bin/python app.py --mode normal
+python3 app.py --mode normal
 ```
 Sample output:
 ```text
