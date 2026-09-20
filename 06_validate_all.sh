@@ -26,7 +26,7 @@ gcloud spanner databases execute-sql "${DATABASE_ID}" \
 
 echo ""
 echo "[3/5] Checking Notification Channels (${NOTIFICATION_EMAILS})..."
-ACCESS_TOKEN="$(gcloud auth print-access-token)"
+ACCESS_TOKEN="$(gcloud auth print-access-token 2>/dev/null)"
 curl -s -H "Authorization: Bearer ${ACCESS_TOKEN}" \
   "https://monitoring.googleapis.com/v3/projects/${PROJECT_ID}/notificationChannels" \
   | python3 -c "
@@ -47,12 +47,7 @@ gcloud monitoring policies list \
 
 echo ""
 echo "[5/5] Validating Application Read/Write & Heartbeat Probe against Spanner..."
-if [[ ! -d "${SCRIPT_DIR}/.venv" ]]; then
-  python3 -m venv "${SCRIPT_DIR}/.venv"
-  "${SCRIPT_DIR}/.venv/bin/pip" install -q -r "${SCRIPT_DIR}/requirements.txt"
-fi
-
-"${SCRIPT_DIR}/.venv/bin/python" "${SCRIPT_DIR}/app.py" \
+python3 "${SCRIPT_DIR}/app.py" \
   --project-id="${PROJECT_ID}" \
   --instance-id="${INSTANCE_ID}" \
   --database-id="${DATABASE_ID}" \

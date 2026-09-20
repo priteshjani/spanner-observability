@@ -17,13 +17,7 @@ echo " Instance  : ${INSTANCE_ID} (${PROJECT_ID})"
 echo " Alerting  : ${NOTIFICATION_EMAIL_1}, ${NOTIFICATION_EMAIL_2}"
 echo "=================================================================="
 
-if [[ ! -d "${SCRIPT_DIR}/.venv" ]]; then
-  echo "[INFO] Creating virtual environment and installing dependencies..."
-  python3 -m venv "${SCRIPT_DIR}/.venv"
-  "${SCRIPT_DIR}/.venv/bin/pip" install -q -r "${SCRIPT_DIR}/requirements.txt"
-fi
-
-"${SCRIPT_DIR}/.venv/bin/python" "${SCRIPT_DIR}/app.py" \
+python3 "${SCRIPT_DIR}/app.py" \
   --project-id="${PROJECT_ID}" \
   --instance-id="${INSTANCE_ID}" \
   --database-id="${DATABASE_ID}" \
