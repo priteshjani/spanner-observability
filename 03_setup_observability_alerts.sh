@@ -15,7 +15,7 @@ echo "1. Creating Email Notification Channels in Project '${PROJECT_ID}'"
 echo "   Emails: ${NOTIFICATION_EMAIL_1}, ${NOTIFICATION_EMAIL_2}"
 echo "=================================================================="
 
-ACCESS_TOKEN="$(gcloud auth print-access-token)"
+ACCESS_TOKEN="$(gcloud auth print-access-token 2>/dev/null)"
 
 create_or_get_email_channel() {
   local email="$1"
@@ -93,7 +93,7 @@ cat > "${SCRIPT_DIR}/alerts/alert_error_rate.json" <<EOF
     {
       "displayName": "Spanner Non-OK API Request Rate > 0.05 req/s",
       "conditionThreshold": {
-        "filter": "resource.type = \"spanner_instance\" AND resource.labels.instance_id = \"${INSTANCE_ID}\" AND metric.type = \"spanner.googleapis.com/api/request_count\" AND metric.labels.status != \"OK\"",
+        "filter": "resource.type = \"spanner_instance\" AND resource.labels.instance_id = \"${INSTANCE_ID}\" AND metric.type = \"spanner.googleapis.com/api/api_request_count\" AND metric.labels.status != \"OK\"",
         "aggregations": [
           {
             "alignmentPeriod": "60s",
@@ -123,7 +123,7 @@ EOF
 EXISTING_ERR_POLICY=$(gcloud monitoring policies list \
   --project="${PROJECT_ID}" \
   --filter="displayName='[Spanner Observability] High API Error Rate - ${INSTANCE_ID}'" \
-  --format="value(name)" | head -n 1 || true)
+  --format="value(name)" 2>/dev/null | head -n 1 || true)
 
 if [[ -n "${EXISTING_ERR_POLICY}" ]]; then
   gcloud monitoring policies update "${EXISTING_ERR_POLICY}" \
@@ -140,13 +140,13 @@ fi
 echo ""
 echo "=================================================================="
 echo "4. Creating Alert Policy 2A: Multi-Region Leader Percentage Shift Alert"
-echo "   Monitors spanner.googleapis.com/instance/leader_percentage in ${PRIMARY_LEADER_REGION}"
+echo "   Monitors spanner.googleapis.com/instance/leader_percentage_by_region in ${PRIMARY_LEADER_REGION}"
 echo "=================================================================="
 cat > "${SCRIPT_DIR}/alerts/alert_leader_percentage_shift.json" <<EOF
 {
   "displayName": "[Spanner Observability] Multi-Region Leader Flip (Metric Shift) - ${INSTANCE_ID}",
   "documentation": {
-    "content": "### Multi-Region Spanner Leader Shift Detected\n\nThe primary leader region **${PRIMARY_LEADER_REGION}** for multi-region Spanner instance **${INSTANCE_ID}** (**${INSTANCE_CONFIG}**) experienced a drop in leader_percentage below 50%, indicating that read-write leader tablets have flipped/failed over to another region (e.g. **${ALTERNATE_LEADER_REGION}**).\n\n- **Project**: ${PROJECT_ID}\n- **Instance**: ${INSTANCE_ID}\n- **Expected Primary Leader**: ${PRIMARY_LEADER_REGION}",
+    "content": "### Multi-Region Spanner Leader Shift Detected\n\nThe primary leader region **${PRIMARY_LEADER_REGION}** for multi-region Spanner instance **${INSTANCE_ID}** (**${INSTANCE_CONFIG}**) experienced a drop in leader_percentage_by_region below 50%, indicating that read-write leader tablets have flipped/failed over to another region (e.g. **${ALTERNATE_LEADER_REGION}**).\n\n- **Project**: ${PROJECT_ID}\n- **Instance**: ${INSTANCE_ID}\n- **Expected Primary Leader**: ${PRIMARY_LEADER_REGION}",
     "mimeType": "text/markdown"
   },
   "combiner": "OR",
@@ -159,7 +159,7 @@ cat > "${SCRIPT_DIR}/alerts/alert_leader_percentage_shift.json" <<EOF
     {
       "displayName": "Primary Leader Region (${PRIMARY_LEADER_REGION}) Leader Percentage < 50%",
       "conditionThreshold": {
-        "filter": "resource.type = \"spanner_instance\" AND resource.labels.instance_id = \"${INSTANCE_ID}\" AND metric.type = \"spanner.googleapis.com/instance/leader_percentage\" AND metric.labels.location = \"${PRIMARY_LEADER_REGION}\"",
+        "filter": "resource.type = \"spanner_instance\" AND resource.labels.instance_id = \"${INSTANCE_ID}\" AND metric.type = \"spanner.googleapis.com/instance/leader_percentage_by_region\" AND metric.labels.region = \"${PRIMARY_LEADER_REGION}\"",
         "aggregations": [
           {
             "alignmentPeriod": "60s",
@@ -167,7 +167,7 @@ cat > "${SCRIPT_DIR}/alerts/alert_leader_percentage_shift.json" <<EOF
             "crossSeriesReducer": "REDUCE_MEAN",
             "groupByFields": [
               "resource.label.instance_id",
-              "metric.label.location"
+              "metric.label.region"
             ]
           }
         ],
@@ -189,7 +189,7 @@ EOF
 EXISTING_LEADER_METRIC_POLICY=$(gcloud monitoring policies list \
   --project="${PROJECT_ID}" \
   --filter="displayName='[Spanner Observability] Multi-Region Leader Flip (Metric Shift) - ${INSTANCE_ID}'" \
-  --format="value(name)" | head -n 1 || true)
+  --format="value(name)" 2>/dev/null | head -n 1 || true)
 
 if [[ -n "${EXISTING_LEADER_METRIC_POLICY}" ]]; then
   gcloud monitoring policies update "${EXISTING_LEADER_METRIC_POLICY}" \
@@ -251,7 +251,7 @@ EOF
 EXISTING_LEADER_LOG_POLICY=$(gcloud monitoring policies list \
   --project="${PROJECT_ID}" \
   --filter="displayName='[Spanner Observability] Multi-Region Leader Flip (Audit & Telemetry) - ${INSTANCE_ID}'" \
-  --format="value(name)" | head -n 1 || true)
+  --format="value(name)" 2>/dev/null | head -n 1 || true)
 
 if [[ -n "${EXISTING_LEADER_LOG_POLICY}" ]]; then
   gcloud monitoring policies update "${EXISTING_LEADER_LOG_POLICY}" \
@@ -282,7 +282,7 @@ cat > "${SCRIPT_DIR}/alerts/dashboard_spanner_observability.json" <<EOF
             {
               "timeSeriesQuery": {
                 "timeSeriesFilter": {
-                  "filter": "resource.type=\"spanner_instance\" AND resource.label.\"instance_id\"=\"${INSTANCE_ID}\" AND metric.type=\"spanner.googleapis.com/api/request_count\"",
+                  "filter": "resource.type=\"spanner_instance\" AND resource.label.\"instance_id\"=\"${INSTANCE_ID}\" AND metric.type=\"spanner.googleapis.com/api/api_request_count\"",
                   "aggregation": {
                     "alignmentPeriod": "60s",
                     "perSeriesAligner": "ALIGN_RATE",
@@ -303,12 +303,12 @@ cat > "${SCRIPT_DIR}/alerts/dashboard_spanner_observability.json" <<EOF
             {
               "timeSeriesQuery": {
                 "timeSeriesFilter": {
-                  "filter": "resource.type=\"spanner_instance\" AND resource.label.\"instance_id\"=\"${INSTANCE_ID}\" AND metric.type=\"spanner.googleapis.com/instance/leader_percentage\"",
+                  "filter": "resource.type=\"spanner_instance\" AND resource.label.\"instance_id\"=\"${INSTANCE_ID}\" AND metric.type=\"spanner.googleapis.com/instance/leader_percentage_by_region\"",
                   "aggregation": {
                     "alignmentPeriod": "60s",
                     "perSeriesAligner": "ALIGN_MEAN",
                     "crossSeriesReducer": "REDUCE_MEAN",
-                    "groupByFields": ["metric.label.\"location\""]
+                    "groupByFields": ["metric.label.\"region\""]
                   }
                 }
               },

@@ -1,0 +1,37 @@
+{
+  "displayName": "[Spanner Observability] Multi-Region Leader Flip (Audit & Telemetry) - spanner-obs-mr",
+  "documentation": {
+    "content": "### Multi-Region Spanner Leader Flip / Change Alert\n\nA multi-region leader flip (default_leader modification or leader election change) was detected on Spanner instance **spanner-obs-mr** / database **finops-obs-db** in project **my-host-prj-472917**.\n\n- **VPC**: my-host-prj-shared-vpc\n- **Primary Region**: us-east4\n- **Alternate Region**: us-east1",
+    "mimeType": "text/markdown"
+  },
+  "combiner": "OR",
+  "enabled": true,
+  "notificationChannels": [
+    "projects/my-host-prj-472917/notificationChannels/8062559329788753074",
+    "projects/my-host-prj-472917/notificationChannels/18302585169387992288"
+  ],
+  "conditions": [
+    {
+      "displayName": "Spanner Leader Change Event Count > 0",
+      "conditionThreshold": {
+        "filter": "resource.type = \"spanner_instance\" AND metric.type = \"logging.googleapis.com/user/spanner_leader_change_events\"",
+        "aggregations": [
+          {
+            "alignmentPeriod": "60s",
+            "perSeriesAligner": "ALIGN_SUM",
+            "crossSeriesReducer": "REDUCE_SUM"
+          }
+        ],
+        "comparison": "COMPARISON_GT",
+        "thresholdValue": 0,
+        "duration": "0s",
+        "trigger": {
+          "count": 1
+        }
+      }
+    }
+  ],
+  "alertStrategy": {
+    "autoClose": "1800s"
+  }
+}

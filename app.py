@@ -21,8 +21,25 @@ import time
 import uuid
 from datetime import datetime, timezone
 
+import subprocess
 from google.api_core import exceptions as gcp_exceptions
+import google.auth
+from google.auth import exceptions as auth_exceptions
+from google.oauth2 import credentials as oauth2_credentials
 from google.cloud import spanner
+
+
+def get_spanner_client(project_id: str) -> spanner.Client:
+    """Create Spanner Client using ADC or falling back to active gcloud CLI access token."""
+    try:
+        creds, _ = google.auth.default()
+        return spanner.Client(project=project_id, credentials=creds)
+    except auth_exceptions.DefaultCredentialsError:
+        token = subprocess.check_output(
+            ["gcloud", "auth", "print-access-token"], text=True, stderr=subprocess.DEVNULL
+        ).strip()
+        creds = oauth2_credentials.Credentials(token=token)
+        return spanner.Client(project=project_id, credentials=creds)
 
 
 def get_current_leader(database) -> str:
@@ -200,7 +217,7 @@ def main():
     print(f" Mode          : {args.mode}")
     print("==================================================================")
 
-    client = spanner.Client(project=args.project_id)
+    client = get_spanner_client(args.project_id)
     instance = client.instance(args.instance_id)
     database = instance.database(args.database_id)
 

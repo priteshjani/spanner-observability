@@ -1,0 +1,92 @@
+{
+  "displayName": "Spanner Multi-Region Availability & Observability (spanner-obs-mr)",
+  "gridLayout": {
+    "columns": "2",
+    "widgets": [
+      {
+        "title": "Spanner API Request Rate by Status (OK vs Errors)",
+        "xyChart": {
+          "dataSets": [
+            {
+              "timeSeriesQuery": {
+                "timeSeriesFilter": {
+                  "filter": "resource.type=\"spanner_instance\" AND resource.label.\"instance_id\"=\"spanner-obs-mr\" AND metric.type=\"spanner.googleapis.com/api/api_request_count\"",
+                  "aggregation": {
+                    "alignmentPeriod": "60s",
+                    "perSeriesAligner": "ALIGN_RATE",
+                    "crossSeriesReducer": "REDUCE_SUM",
+                    "groupByFields": ["metric.label.\"status\""]
+                  }
+                }
+              },
+              "plotType": "LINE"
+            }
+          ]
+        }
+      },
+      {
+        "title": "Multi-Region Leader Percentage by Region (Leader Flip Tracking)",
+        "xyChart": {
+          "dataSets": [
+            {
+              "timeSeriesQuery": {
+                "timeSeriesFilter": {
+                  "filter": "resource.type=\"spanner_instance\" AND resource.label.\"instance_id\"=\"spanner-obs-mr\" AND metric.type=\"spanner.googleapis.com/instance/leader_percentage_by_region\"",
+                  "aggregation": {
+                    "alignmentPeriod": "60s",
+                    "perSeriesAligner": "ALIGN_MEAN",
+                    "crossSeriesReducer": "REDUCE_MEAN",
+                    "groupByFields": ["metric.label.\"region\""]
+                  }
+                }
+              },
+              "plotType": "STACKED_AREA"
+            }
+          ]
+        }
+      },
+      {
+        "title": "Spanner API Request Latency (P99 by Method)",
+        "xyChart": {
+          "dataSets": [
+            {
+              "timeSeriesQuery": {
+                "timeSeriesFilter": {
+                  "filter": "resource.type=\"spanner_instance\" AND resource.label.\"instance_id\"=\"spanner-obs-mr\" AND metric.type=\"spanner.googleapis.com/api/request_latencies\"",
+                  "aggregation": {
+                    "alignmentPeriod": "60s",
+                    "perSeriesAligner": "ALIGN_PERCENTILE_99",
+                    "crossSeriesReducer": "REDUCE_MEAN",
+                    "groupByFields": ["metric.label.\"method\""]
+                  }
+                }
+              },
+              "plotType": "LINE"
+            }
+          ]
+        }
+      },
+      {
+        "title": "Spanner High-Priority CPU Utilization (%)",
+        "xyChart": {
+          "dataSets": [
+            {
+              "timeSeriesQuery": {
+                "timeSeriesFilter": {
+                  "filter": "resource.type=\"spanner_instance\" AND resource.label.\"instance_id\"=\"spanner-obs-mr\" AND metric.type=\"spanner.googleapis.com/instance/cpu/utilization_by_priority\"",
+                  "aggregation": {
+                    "alignmentPeriod": "60s",
+                    "perSeriesAligner": "ALIGN_MEAN",
+                    "crossSeriesReducer": "REDUCE_SUM",
+                    "groupByFields": ["metric.label.\"priority\""]
+                  }
+                }
+              },
+              "plotType": "LINE"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

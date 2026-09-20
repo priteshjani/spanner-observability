@@ -1,0 +1,41 @@
+{
+  "displayName": "[Spanner Observability] High API Error Rate - spanner-obs-mr",
+  "documentation": {
+    "content": "### Spanner Instance Error Rate Alert\n\nSpanner instance **spanner-obs-mr** in project **my-host-prj-472917** (VPC: **my-host-prj-shared-vpc**) is returning non-OK API responses (status != OK).\n\n- **Instance**: spanner-obs-mr\n- **Database**: finops-obs-db\n- **Action**: Check Cloud Monitoring dashboard and application error logs for DEADLINE_EXCEEDED, ABORTED, INVALID_ARGUMENT, or UNAVAILABLE errors.",
+    "mimeType": "text/markdown"
+  },
+  "combiner": "OR",
+  "enabled": true,
+  "notificationChannels": [
+    "projects/my-host-prj-472917/notificationChannels/8062559329788753074",
+    "projects/my-host-prj-472917/notificationChannels/18302585169387992288"
+  ],
+  "conditions": [
+    {
+      "displayName": "Spanner Non-OK API Request Rate > 0.05 req/s",
+      "conditionThreshold": {
+        "filter": "resource.type = \"spanner_instance\" AND resource.labels.instance_id = \"spanner-obs-mr\" AND metric.type = \"spanner.googleapis.com/api/api_request_count\" AND metric.labels.status != \"OK\"",
+        "aggregations": [
+          {
+            "alignmentPeriod": "60s",
+            "perSeriesAligner": "ALIGN_RATE",
+            "crossSeriesReducer": "REDUCE_SUM",
+            "groupByFields": [
+              "resource.label.instance_id",
+              "metric.label.status"
+            ]
+          }
+        ],
+        "comparison": "COMPARISON_GT",
+        "thresholdValue": 0.05,
+        "duration": "60s",
+        "trigger": {
+          "count": 1
+        }
+      }
+    }
+  ],
+  "alertStrategy": {
+    "autoClose": "1800s"
+  }
+}
