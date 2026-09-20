@@ -67,7 +67,6 @@ flowchart LR
 | [`05_trigger_leader_flip_scenario.sh`](./05_trigger_leader_flip_scenario.sh) | **Scenario 2**: Flips the multi-region `default_leader` between `us-east4` and `us-east1` via `ALTER DATABASE ... SET OPTIONS (default_leader = ...)` to trigger the Leader Flip alerts. |
 | [`06_validate_all.sh`](./06_validate_all.sh) | Runs end-to-end verification across the Spanner instance, database leader option, email channels, alert policies, and a live read/write probe. |
 | [`07_cleanup.sh`](./07_cleanup.sh) | Deletes the alert policies, log-based metric, and multi-region Spanner instance after the demo. |
-| [`08_push_to_git.sh`](./08_push_to_git.sh) | Commits and pushes all files to `https://github.com/priteshjani/spanner-observability.git`. |
 
 ---
 

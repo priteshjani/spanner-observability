@@ -2,3 +2,4 @@
 __pycache__/
 *.pyc
 .DS_Store
+08_push_to_git.sh
